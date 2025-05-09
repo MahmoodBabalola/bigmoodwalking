@@ -4,28 +4,37 @@ let map;
 let userMarker;
 let startMarker; // For pin drop
 let watchId;
-let startLatLng; // To store the starting point
+let startLatLng; // Starting point
 let selectedMode = 'mylocation';
+let mapClickListener; // To remove old click listeners
 
-function initMap(lat, lng) {
+function initMap() {
+  const defaultLocation = { lat: 51.505, lng: -0.09 }; // Default center
+
   map = new google.maps.Map(document.getElementById("map"), {
-    center: { lat, lng },
-    zoom: 14,
+    center: defaultLocation,
+    zoom: 13,
   });
 }
+
+window.onload = initMap; // Initialize map on page load
 
 function handleLocationChoice() {
   selectedMode = document.getElementById("locationChoice").value;
 
-  document.getElementById("postcodeInput").style.display = selectedMode === 'postcode' ? 'block' : 'none';
+  if (selectedMode === 'postcode') {
+    openPostcodeModal();
+  }
 
   if (selectedMode === 'pin') {
-    alert("Click anywhere on the map to set your starting point.");
-    map.addListener("click", (e) => {
+    alert("Click on the map to set your starting point.");
+    if (mapClickListener) {
+      google.maps.event.removeListener(mapClickListener);
+    }
+    mapClickListener = map.addListener("click", (e) => {
       const lat = e.latLng.lat();
       const lng = e.latLng.lng();
 
-      // Place or move the start marker
       if (startMarker) {
         startMarker.setPosition(e.latLng);
       } else {
@@ -35,10 +44,48 @@ function handleLocationChoice() {
           title: "Start Point",
         });
       }
-
       startLatLng = { lat, lng };
     });
   }
+}
+
+function openPostcodeModal() {
+  document.getElementById("postcodeModal").style.display = "block";
+}
+
+function closePostcodeModal() {
+  document.getElementById("postcodeModal").style.display = "none";
+}
+
+function submitPostcode() {
+  const postcode = document.getElementById("postcode").value;
+  if (!postcode) {
+    alert("Please enter a postcode.");
+    return;
+  }
+  const geocoder = new google.maps.Geocoder();
+  geocoder.geocode({ address: postcode }, (results, status) => {
+    if (status === 'OK' && results[0]) {
+      const lat = results[0].geometry.location.lat();
+      const lng = results[0].geometry.location.lng();
+      startLatLng = { lat, lng };
+
+      if (startMarker) {
+        startMarker.setPosition(results[0].geometry.location);
+      } else {
+        startMarker = new google.maps.Marker({
+          position: results[0].geometry.location,
+          map: map,
+          title: "Start Point",
+        });
+      }
+
+      map.setCenter(results[0].geometry.location);
+      closePostcodeModal();
+    } else {
+      alert("Could not find that postcode. Please try again.");
+    }
+  });
 }
 
 function getRoute() {
@@ -58,26 +105,9 @@ function getRoute() {
       console.error("Geolocation error: ", error);
       alert("Could not get your location. Please allow location access.");
     });
-  } else if (selectedMode === 'postcode') {
-    const postcode = document.getElementById("postcode").value;
-    if (!postcode) {
-      alert("Please enter a postcode.");
-      return;
-    }
-    const geocoder = new google.maps.Geocoder();
-    geocoder.geocode({ address: postcode }, (results, status) => {
-      if (status === 'OK' && results[0]) {
-        const lat = results[0].geometry.location.lat();
-        const lng = results[0].geometry.location.lng();
-        startLatLng = { lat, lng };
-        buildRoute(lat, lng, distance);
-      } else {
-        alert("Could not find that postcode. Please try again.");
-      }
-    });
-  } else if (selectedMode === 'pin') {
+  } else if (selectedMode === 'postcode' || selectedMode === 'pin') {
     if (!startLatLng) {
-      alert("Please click on the map to drop a pin first.");
+      alert("Please set your starting point first (postcode or pin).");
       return;
     }
     buildRoute(startLatLng.lat, startLatLng.lng, distance);
@@ -85,9 +115,10 @@ function getRoute() {
 }
 
 function buildRoute(lat, lng, distance) {
-  initMap(lat, lng);
+  // Clear existing route
+  directionsRenderer.setMap(null);
+  directionsRenderer.setMap(map);
 
-  // Draw radius circle
   new google.maps.Circle({
     strokeColor: "#FF0000",
     strokeOpacity: 0.8,
@@ -99,7 +130,6 @@ function buildRoute(lat, lng, distance) {
     radius: distance * 500,
   });
 
-  // Generate waypoints around circle
   const waypoints = [];
   const numPoints = 6;
   const radiusInKm = (distance / (2 * Math.PI));
@@ -126,7 +156,6 @@ function buildRoute(lat, lng, distance) {
     optimizeWaypoints: false,
   };
 
-  directionsRenderer.setMap(map);
   directionsService.route(request, (result, status) => {
     if (status === 'OK') {
       directionsRenderer.setDirections(result);
