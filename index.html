@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Walk Radius Finder</title>
+  <script src="script.js" defer></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>How far do you want to walk?</h1>
+  <input type="number" id="distance" placeholder="Enter distance in km" />
+  <button onclick="getRoute()">Find Route</button>
+  <div id="map" style="height: 400px; width: 100%; margin-top: 20px;"></div>
+
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDXj03ZzbnBgs9Ul5kVtH0-OUExjwCY0FI&libraries=places"></script>
+</body>
+</html>
