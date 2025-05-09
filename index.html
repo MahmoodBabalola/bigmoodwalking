@@ -1,26 +1,46 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Walk Route & Navigation</title>
-  <script src="script.js" defer></script>
+  <title>BigMood Walking</title>
   <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
 </head>
 <body>
-  <h1>Choose Start Point & Distance</h1>
+  <header>
+    <h1>BigMood Walking</h1>
+  </header>
 
-  <select id="locationChoice" onchange="handleLocationChoice()">
-    <option value="mylocation">Use My Location</option>
-    <option value="postcode">Enter Postcode</option>
-    <option value="pin">Drop a Pin on the Map</option>
-  </select>
+  <section class="input-section">
+    <h2>How far do you want to walk?</h2>
+    <div class="input-group">
+      <input type="number" id="distance" placeholder="Distance (miles)" />
+      <button id="useLocation" onclick="handleLocationChoice('mylocation')">Use My Location</button>
+    </div>
+    <button id="generateRoute" onclick="getRoute()">Generate</button>
+  </section>
 
-  <input type="number" id="distance" placeholder="Enter distance in km" />
-  <button onclick="getRoute()">Find Route</button>
-  <button id="startNavigation" style="display: none;" onclick="startNavigation()">Go!</button>
-  <button id="stopNavigation" style="display: none;" onclick="stopNavigation()">Stop</button>
+  <main class="main-content">
+    <div class="map-container">
+      <div id="map"></div>
+    </div>
+    <div class="info-container">
+      <div class="route-info">
+        <h3>Route Info</h3>
+        <p id="routeDistance">Distance: -</p>
+        <p id="routeTime">Estimated Time: -</p>
+        <p id="routeTerrain">Terrain: Flat</p>
+      </div>
+      <div class="directions">
+        <h3>Directions</h3>
+        <ol id="stepsList"></ol>
+      </div>
+    </div>
+  </main>
 
-  <!-- Map always visible -->
-  <div id="map" style="height: 400px; width: 100%; margin-top: 20px;"></div>
+  <div class="nav-buttons">
+    <button id="startNavigation" style="display: none;" onclick="startNavigation()">Go!</button>
+    <button id="stopNavigation" style="display: none;" onclick="stopNavigation()">Stop</button>
+  </div>
 
   <!-- Postcode Modal -->
   <div id="postcodeModal" class="modal">
