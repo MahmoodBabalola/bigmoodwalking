@@ -6,7 +6,9 @@ let startMarker; // For pin drop
 let watchId;
 let startLatLng; // Starting point
 let selectedMode = 'mylocation';
-let mapClickListener; // To remove old click listeners
+let mapClickListener;
+let hasStartedWalking = false;
+let navigationSteps = []; // Step-by-step instructions
 
 function initMap() {
   const defaultLocation = { lat: 51.505, lng: -0.09 }; // Default center
@@ -17,7 +19,7 @@ function initMap() {
   });
 }
 
-window.onload = initMap; // Initialize map on page load
+window.onload = initMap;
 
 function handleLocationChoice() {
   selectedMode = document.getElementById("locationChoice").value;
@@ -115,6 +117,9 @@ function getRoute() {
 }
 
 function buildRoute(lat, lng, distance) {
+  // Reset walking status
+  hasStartedWalking = false;
+
   // Clear existing route
   directionsRenderer.setMap(null);
   directionsRenderer.setMap(map);
@@ -160,10 +165,37 @@ function buildRoute(lat, lng, distance) {
     if (status === 'OK') {
       directionsRenderer.setDirections(result);
       document.getElementById("startNavigation").style.display = "inline-block";
+
+      // Extract and show steps
+      const steps = result.routes[0].legs[0].steps;
+      showNavigationSteps(steps);
     } else {
       console.error("Directions request failed: " + status);
       alert("Could not generate route. Try a different distance or location.");
     }
+  });
+}
+
+function showNavigationSteps(steps) {
+  navigationSteps = steps;
+
+  const container = document.getElementById("instructions");
+  if (!container) {
+    const div = document.createElement("div");
+    div.id = "instructions";
+    div.style.marginTop = "20px";
+    div.innerHTML = "<h3>Steps:</h3><ol id='stepsList'></ol>";
+    document.body.appendChild(div);
+  }
+
+  const list = document.getElementById("stepsList");
+  list.innerHTML = "";
+
+  steps.forEach((step, i) => {
+    const li = document.createElement("li");
+    li.innerHTML = step.instructions;
+    li.id = `step-${i}`;
+    list.appendChild(li);
   });
 }
 
@@ -200,10 +232,17 @@ function startNavigation() {
       }
 
       const distanceToStart = getDistanceFromLatLonInMeters(currentLat, currentLng, startLatLng.lat, startLatLng.lng);
-      if (distanceToStart < 20) {
+      if (!hasStartedWalking && distanceToStart > 50) {
+        hasStartedWalking = true;
+      }
+
+      if (hasStartedWalking && distanceToStart < 20) {
         alert("Congrats! You've completed your route 🎉");
         stopNavigation();
       }
+
+      // Highlight current step
+      highlightCurrentStep(pos);
     },
     (error) => {
       console.error("Tracking error: ", error);
@@ -218,6 +257,29 @@ function startNavigation() {
 
   document.getElementById("startNavigation").disabled = true;
   document.getElementById("stopNavigation").style.display = "inline-block";
+}
+
+function highlightCurrentStep(userPos) {
+  let closestStepIndex = -1;
+  let closestDistance = Infinity;
+
+  navigationSteps.forEach((step, i) => {
+    const lat = step.start_location.lat();
+    const lng = step.start_location.lng();
+    const dist = getDistanceFromLatLonInMeters(userPos.lat, userPos.lng, lat, lng);
+
+    if (dist < closestDistance) {
+      closestDistance = dist;
+      closestStepIndex = i;
+    }
+  });
+
+  if (closestStepIndex !== -1) {
+    navigationSteps.forEach((_, i) => {
+      const el = document.getElementById(`step-${i}`);
+      if (el) el.style.backgroundColor = i === closestStepIndex ? "#c1eaff" : "";
+    });
+  }
 }
 
 function stopNavigation() {
