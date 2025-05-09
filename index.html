@@ -1,20 +1,23 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Walk Route & Navigation</title>
-  <script src="script.js" defer></script>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <h1>How far do you want to walk?</h1>
-  <input type="number" id="distance" placeholder="Enter distance in km" />
-  <button onclick="getRoute()">Find Route</button>
-  <button id="startNavigation" style="display: none;" onclick="startNavigation()">Go!</button>
-  <button id="stopNavigation" style="display: none;" onclick="stopNavigation()">Stop</button>
+<h1>Choose Start Point & Distance</h1>
 
-  <div id="map" style="height: 400px; width: 100%; margin-top: 20px;"></div>
+<select id="locationChoice" onchange="handleLocationChoice()">
+  <option value="mylocation">Use My Location</option>
+  <option value="postcode">Enter Postcode</option>
+  <option value="pin">Drop a Pin on the Map</option>
+</select>
 
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDXj03ZzbnBgs9Ul5kVtH0-OUExjwCY0FI&libraries=places"></script>
+<div id="postcodeInput" style="display: none;">
+  <input type="text" id="postcode" placeholder="Enter postcode" />
+</div>
+
+<input type="number" id="distance" placeholder="Enter distance in km" />
+<button onclick="getRoute()">Find Route</button>
+<button id="startNavigation" style="display: none;" onclick="startNavigation()">Go!</button>
+<button id="stopNavigation" style="display: none;" onclick="stopNavigation()">Stop</button>
+
+<div id="map" style="height: 400px; width: 100%; margin-top: 20px;"></div>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDXj03ZzbnBgs9Ul5kVtH0-OUExjwCY0FI&libraries=places"></script>
 </body>
 </html>
 
