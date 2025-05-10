@@ -141,7 +141,7 @@ function showChallenge(newDistance, unit, message) {
 
   document.getElementById("acceptChallenge").onclick = () => {
     document.getElementById("challengeModal").style.display = "none";
-    proceedWithRoute(parseFloat(newDistance), unit); // ✅ FIXED: force number
+    proceedWithRoute(parseFloat(newDistance), unit);
   };
 
   document.getElementById("declineChallenge").onclick = () => {
@@ -222,7 +222,16 @@ function buildRoute(lat, lng, distance, unit) {
 }
 
 function updateRouteInfo(leg) {
-  document.getElementById("routeDistance").textContent = `Distance: ${leg.distance.text}`;
+  const unit = document.getElementById("unitSelector").value;
+  let distanceText = leg.distance.text;
+
+  if (unit === 'miles') {
+    const kmValue = parseFloat(leg.distance.text.replace(/[^0-9.]/g, ''));
+    const milesValue = (kmValue * 0.621371).toFixed(2);
+    distanceText = `${milesValue} miles`;
+  }
+
+  document.getElementById("routeDistance").textContent = `Distance: ${distanceText}`;
   document.getElementById("routeTime").textContent = `Estimated Time: ${leg.duration.text}`;
 }
 
