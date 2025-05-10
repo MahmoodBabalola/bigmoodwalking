@@ -19,12 +19,16 @@ header {
 
 .input-group {
   margin: 15px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-input, button {
+input, button, select {
   padding: 10px;
   font-size: 16px;
-  margin: 5px;
 }
 
 .action-buttons {

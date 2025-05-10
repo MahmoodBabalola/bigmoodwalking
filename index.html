@@ -13,8 +13,17 @@
   <section class="input-section">
     <h2>How far do you want to walk?</h2>
     <div class="input-group">
-      <input type="number" id="distance" placeholder="Distance (miles)" />
-      <button id="useLocation" onclick="handleLocationChoice('mylocation')">Use My Location</button>
+      <input type="number" id="distance" placeholder="Enter distance" />
+      <select id="unitSelector">
+        <option value="miles">Miles</option>
+        <option value="kilometers">Kilometers</option>
+      </select>
+
+      <select id="locationChoice" onchange="handleLocationChoice()">
+        <option value="mylocation">Use My Location</option>
+        <option value="postcode">Enter Postcode</option>
+        <option value="pin">Drop a Pin on the Map</option>
+      </select>
     </div>
     <div class="action-buttons">
       <button id="generateRoute" onclick="getRoute()">Let's have it</button>
