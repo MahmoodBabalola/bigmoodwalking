@@ -102,10 +102,24 @@ input, button, select {
   border: 1px solid #888;
   width: 80%;
   max-width: 400px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  text-align: center;
 }
 
 .close {
   float: right;
   font-size: 28px;
+  cursor: pointer;
+}
+
+#challengeModal .action-buttons {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-around;
+}
+
+#challengeModal button {
+  padding: 10px 20px;
+  font-size: 16px;
   cursor: pointer;
 }
