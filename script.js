@@ -141,7 +141,7 @@ function showChallenge(newDistance, unit, message) {
 
   document.getElementById("acceptChallenge").onclick = () => {
     document.getElementById("challengeModal").style.display = "none";
-    proceedWithRoute(newDistance, unit);
+    proceedWithRoute(parseFloat(newDistance), unit); // ✅ FIXED: force number
   };
 
   document.getElementById("declineChallenge").onclick = () => {
