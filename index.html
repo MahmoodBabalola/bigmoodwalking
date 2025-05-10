@@ -1,67 +1,47 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>BigMood Walking</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="script.js" defer></script>
-</head>
-<body>
-  <header>
-    <h1>BigMood Walking</h1>
-  </header>
+function buildRoute(lat, lng, distance, unit) {
+  hasStartedWalking = false;
+  
+  // 🛠️ Set up the directions renderer to suppress markers
+  directionsRenderer.setMap(null);
+  directionsRenderer.setOptions({
+    map: map,
+    suppressMarkers: true  // 👈 Hides A/B/C/D
+  });
 
-  <section class="input-section">
-    <h2>How far do you want to walk?</h2>
-    <div class="input-group">
-      <input type="number" id="distance" placeholder="Enter distance" />
-      <select id="unitSelector">
-        <option value="miles">Miles</option>
-        <option value="kilometers">Kilometers</option>
-      </select>
+  let distanceInKm = parseFloat(distance);
+  if (unit === 'miles') {
+    distanceInKm *= 1.60934; // convert miles to km
+  }
 
-      <select id="locationChoice" onchange="handleLocationChoice()">
-        <option value="mylocation">Use My Location</option>
-        <option value="postcode">Enter Postcode</option>
-      </select>
-    </div>
-    <div class="action-buttons">
-      <button id="generateRoute" onclick="getRoute()">Let's have it</button>
-      <button id="startNavigation" style="display: none;" onclick="startNavigation()">Go!</button>
-    </div>
-  </section>
+  const waypoints = [];
+  const numPoints = 6;
+  const radiusInKm = distanceInKm / (2 * Math.PI);
 
-  <main class="main-content">
-    <div class="map-container">
-      <div id="map"></div>
-    </div>
-    <div class="info-container">
-      <div class="route-info">
-        <h3>Route Info</h3>
-        <p id="routeDistance">Distance: -</p>
-        <p id="routeTime">Estimated Time: -</p>
-        <p id="routeTerrain">Terrain: Flat</p>
-      </div>
-      <div class="directions">
-        <h3>Directions</h3>
-        <ol id="stepsList"></ol>
-      </div>
-      <div class="stop-button">
-        <button id="stopNavigation" style="display: none;" onclick="stopNavigation()">Stop</button>
-      </div>
-    </div>
-  </main>
+  for (let i = 0; i < numPoints; i++) {
+    const angle = (i / numPoints) * 2 * Math.PI;
+    const dx = radiusInKm * Math.cos(angle);
+    const dy = radiusInKm * Math.sin(angle);
+    const pointLat = lat + (dy / 111);
+    const pointLng = lng + (dx / (111 * Math.cos(lat * Math.PI / 180)));
+    waypoints.push({ location: { lat: pointLat, lng: pointLng }, stopover: true });
+  }
 
-  <!-- Postcode Modal -->
-  <div id="postcodeModal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closePostcodeModal()">&times;</span>
-      <h2>Enter Postcode</h2>
-      <input type="text" id="postcode" placeholder="Enter postcode" />
-      <button onclick="submitPostcode()">Submit</button>
-    </div>
-  </div>
+  const request = {
+    origin: { lat, lng },
+    destination: { lat, lng },
+    travelMode: 'WALKING',
+    waypoints,
+    optimizeWaypoints: false,
+  };
 
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDXj03ZzbnBgs9Ul5kVtH0-OUExjwCY0FI&libraries=places"></script>
-</body>
-</html>
-
+  directionsService.route(request, (result, status) => {
+    if (status === 'OK') {
+      directionsRenderer.setDirections(result);
+      document.getElementById("startNavigation").style.display = "inline-block";
+      updateRouteInfo(result.routes[0].legs[0]);
+      showNavigationSteps(result.routes[0].legs[0].steps);
+    } else {
+      alert("Could not generate route.");
+    }
+  });
+}
