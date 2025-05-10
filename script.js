@@ -96,8 +96,13 @@ function getRoute() {
 
 function buildRoute(lat, lng, distance, unit) {
   hasStartedWalking = false;
+
+  // 🛠️ Set up the directions renderer to suppress default markers (hide A/B/C/D)
   directionsRenderer.setMap(null);
-  directionsRenderer.setMap(map);
+  directionsRenderer.setOptions({
+    map: map,
+    suppressMarkers: true  // 👈 Hides A/B/C/D markers
+  });
 
   let distanceInKm = parseFloat(distance);
   if (unit === 'miles') {
