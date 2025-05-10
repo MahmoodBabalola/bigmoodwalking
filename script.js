@@ -10,7 +10,7 @@ let hasStartedWalking = false;
 let navigationSteps = [];
 
 function initMap() {
-  const defaultLocation = { lat: 51.505, lng: -0.09 };
+  const defaultLocation = { lat: 51.505, lng: -0.09 }; // Default center
   map = new google.maps.Map(document.getElementById("map"), {
     center: defaultLocation,
     zoom: 13,
@@ -25,22 +25,6 @@ function handleLocationChoice() {
 
   if (choice === 'postcode') {
     openPostcodeModal();
-  } else if (choice === 'pin') {
-    alert("Click on the map to set your starting point.");
-    map.addListener("click", (e) => {
-      const lat = e.latLng.lat();
-      const lng = e.latLng.lng();
-      if (startMarker) {
-        startMarker.setPosition(e.latLng);
-      } else {
-        startMarker = new google.maps.Marker({
-          position: e.latLng,
-          map: map,
-          title: "Start Point",
-        });
-      }
-      startLatLng = { lat, lng };
-    });
   }
 }
 
@@ -64,6 +48,7 @@ function submitPostcode() {
       const lat = results[0].geometry.location.lat();
       const lng = results[0].geometry.location.lng();
       startLatLng = { lat, lng };
+
       if (startMarker) {
         startMarker.setPosition(results[0].geometry.location);
       } else {
@@ -73,6 +58,7 @@ function submitPostcode() {
           title: "Start Point",
         });
       }
+
       map.setCenter(results[0].geometry.location);
       closePostcodeModal();
     } else {
@@ -99,7 +85,7 @@ function getRoute() {
     }, () => {
       alert("Could not get your location.");
     });
-  } else if (selectedMode === 'postcode' || selectedMode === 'pin') {
+  } else if (selectedMode === 'postcode') {
     if (!startLatLng) {
       alert("Please set your starting point first.");
       return;
@@ -115,7 +101,7 @@ function buildRoute(lat, lng, distance, unit) {
 
   let distanceInKm = parseFloat(distance);
   if (unit === 'miles') {
-    distanceInKm *= 1.60934; // convert to km
+    distanceInKm *= 1.60934; // convert miles to km
   }
 
   const waypoints = [];
@@ -126,7 +112,7 @@ function buildRoute(lat, lng, distance, unit) {
     const angle = (i / numPoints) * 2 * Math.PI;
     const dx = radiusInKm * Math.cos(angle);
     const dy = radiusInKm * Math.sin(angle);
-    const pointLat = lat + (dy / 111);
+    const pointLat = lat + (dy / 111); // ~111 km per degree latitude
     const pointLng = lng + (dx / (111 * Math.cos(lat * Math.PI / 180)));
     waypoints.push({ location: { lat: pointLat, lng: pointLng }, stopover: true });
   }
@@ -168,4 +154,92 @@ function showNavigationSteps(steps) {
   });
 }
 
-// rest of the navigation logic remains unchanged...
+function startNavigation() {
+  if (!map || !startLatLng) {
+    alert("Please generate a route first!");
+    return;
+  }
+
+  watchId = navigator.geolocation.watchPosition(
+    (position) => {
+      const pos = { lat: position.coords.latitude, lng: position.coords.longitude };
+      map.setCenter(pos);
+
+      if (!userMarker) {
+        userMarker = new google.maps.Marker({
+          position: pos,
+          map: map,
+          title: "You are here",
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 8,
+            fillColor: "#00F",
+            fillOpacity: 0.8,
+            strokeWeight: 2,
+            strokeColor: "#fff"
+          }
+        });
+      } else {
+        userMarker.setPosition(pos);
+      }
+
+      const distToStart = getDistanceFromLatLonInMeters(pos.lat, pos.lng, startLatLng.lat, startLatLng.lng);
+      if (!hasStartedWalking && distToStart > 50) hasStartedWalking = true;
+
+      if (hasStartedWalking && distToStart < 20) {
+        alert("Congrats! You've completed your route 🎉");
+        stopNavigation();
+      }
+
+      highlightCurrentStep(pos);
+    },
+    () => alert("Error tracking your location."),
+    { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+  );
+
+  document.getElementById("startNavigation").disabled = true;
+  document.getElementById("stopNavigation").style.display = "inline-block";
+}
+
+function highlightCurrentStep(userPos) {
+  let closestIdx = -1;
+  let closestDist = Infinity;
+
+  navigationSteps.forEach((step, i) => {
+    const lat = step.start_location.lat();
+    const lng = step.start_location.lng();
+    const dist = getDistanceFromLatLonInMeters(userPos.lat, userPos.lng, lat, lng);
+
+    if (dist < closestDist) {
+      closestDist = dist;
+      closestIdx = i;
+    }
+  });
+
+  if (closestIdx !== -1) {
+    navigationSteps.forEach((_, i) => {
+      const el = document.getElementById(`step-${i}`);
+      if (el) el.style.backgroundColor = i === closestIdx ? "#c1eaff" : "";
+    });
+  }
+}
+
+function stopNavigation() {
+  if (watchId) {
+    navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+    alert("Navigation stopped.");
+    document.getElementById("startNavigation").disabled = false;
+    document.getElementById("stopNavigation").style.display = "none";
+  }
+}
+
+function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
+  const R = 6371e3;
+  const φ1 = lat1 * Math.PI / 180;
+  const φ2 = lat2 * Math.PI / 180;
+  const Δφ = (lat2 - lat1) * Math.PI / 180;
+  const Δλ = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
