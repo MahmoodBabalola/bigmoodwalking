@@ -16,7 +16,10 @@
       <input type="number" id="distance" placeholder="Distance (miles)" />
       <button id="useLocation" onclick="handleLocationChoice('mylocation')">Use My Location</button>
     </div>
-    <button id="generateRoute" onclick="getRoute()">Generate</button>
+    <div class="action-buttons">
+      <button id="generateRoute" onclick="getRoute()">Let's have it</button>
+      <button id="startNavigation" style="display: none;" onclick="startNavigation()">Go!</button>
+    </div>
   </section>
 
   <main class="main-content">
@@ -34,13 +37,11 @@
         <h3>Directions</h3>
         <ol id="stepsList"></ol>
       </div>
+      <div class="stop-button">
+        <button id="stopNavigation" style="display: none;" onclick="stopNavigation()">Stop</button>
+      </div>
     </div>
   </main>
-
-  <div class="nav-buttons">
-    <button id="startNavigation" style="display: none;" onclick="startNavigation()">Go!</button>
-    <button id="stopNavigation" style="display: none;" onclick="stopNavigation()">Stop</button>
-  </div>
 
   <!-- Postcode Modal -->
   <div id="postcodeModal" class="modal">
